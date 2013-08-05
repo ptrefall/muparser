@@ -87,7 +87,7 @@ muFloat_t* AddVariable(const muChar_t* a_szName, void *pUserData)
   if (iVal>=PARSER_MAXVARS-1) 
   {
      printf("Variable buffer overflow.");
-     return NULL;
+     return nullptr;
   }
 
   return &afValBuf[iVal++];
@@ -107,11 +107,7 @@ void Intro(muParserHandle_t hParser)
   printf("---------------------------------------\n");
   printf("Commands:\n");
   printf("  list var     - list parser variables\n");
-  printf("  list exprvar - list expression variables\n");
   printf("  list const   - list all numeric parser constants\n");
-  printf("  locale de    - switch to german locale\n");
-  printf("  locale en    - switch to english locale\n");
-  printf("  locale reset - reset locale\n");
   printf("  test bulk    - test bulk mode\n");
   printf("  quit         - exits the parser\n\n");
   printf("---------------------------------------\n");
@@ -227,36 +223,9 @@ int CheckKeywords(const char *a_szLine, muParserHandle_t a_hParser)
     ListVar(a_hParser);
     return 1;
   }
-  else if (!strcmp(a_szLine, "list exprvar"))
-  {
-    ListExprVar(a_hParser);
-    return 1;
-  }
   else if (!strcmp(a_szLine, "list const"))
   {
     ListConst(a_hParser);
-    return 1;
-  }
-  else if (!strcmp(a_szLine, "locale de"))
-  {
-    printf("Setting german locale: ArgSep=';' DecSep=',' ThousandsSep='.'\n");
-    mupSetArgSep(a_hParser, ';');
-    mupSetDecSep(a_hParser, ',');
-    mupSetThousandsSep(a_hParser, '.');
-    return 1;
-  }
-  else if (!strcmp(a_szLine, "locale en"))
-  {
-    printf("Setting english locale: ArgSep=',' DecSep='.' ThousandsSep=''\n");
-    mupSetArgSep(a_hParser, ',');
-    mupSetDecSep(a_hParser, '.');
-    mupSetThousandsSep(a_hParser, 0);
-    return 1;
-  }
-  else if (!strcmp(a_szLine, "locale reset"))
-  {
-    printf("Resetting locale\n");
-    mupResetLocale(a_hParser);
     return 1;
   }
   else if (!strcmp(a_szLine, "test bulk"))
@@ -340,7 +309,7 @@ void Calc()
 #endif
 
   // Set a variable factory
-  mupSetVarFactory(hParser, AddVariable, NULL);
+  mupSetVarFactory(hParser, AddVariable, nullptr);
 
   // Define parser variables and bind them to C++ variables [optional]
   mupDefineConst(hParser, "const1", 1);  

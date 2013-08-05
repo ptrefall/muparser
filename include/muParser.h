@@ -58,11 +58,6 @@ namespace mu
     virtual void InitFun();
     virtual void InitConst();
     virtual void InitOprt();
-    virtual void OnDetectVar(string_type *pExpr, int &nStart, int &nEnd);
-
-    value_type Diff(value_type *a_Var, 
-                    value_type a_fPos, 
-                    value_type a_fEpsilon = 0) const;
 
   protected:
 
@@ -99,7 +94,6 @@ namespace mu
     // Prefix operators
     // !!! Unary Minus is a MUST if you want to use negative signs !!!
     static value_type  UnaryMinus(value_type);
-    static value_type  UnaryPlus(value_type);
 
     // Functions with variable number of arguments
     static value_type Sum(const value_type*, int);  // sum

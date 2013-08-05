@@ -67,9 +67,7 @@ namespace mu
     m_vErrMsg[ecUNASSIGNABLE_TOKEN]     = _T("Unexpected token \"$TOK$\" found at position $POS$.");
     m_vErrMsg[ecINTERNAL_ERROR]         = _T("Internal error");
     m_vErrMsg[ecINVALID_NAME]           = _T("Invalid function-, variable- or constant name: \"$TOK$\".");
-    m_vErrMsg[ecINVALID_BINOP_IDENT]    = _T("Invalid binary operator identifier: \"$TOK$\".");
     m_vErrMsg[ecINVALID_INFIX_IDENT]    = _T("Invalid infix operator identifier: \"$TOK$\".");
-    m_vErrMsg[ecINVALID_POSTFIX_IDENT]  = _T("Invalid postfix operator identifier: \"$TOK$\".");
     m_vErrMsg[ecINVALID_FUN_PTR]        = _T("Invalid pointer to callback function.");
     m_vErrMsg[ecEMPTY_EXPRESSION]       = _T("Expression is empty.");
     m_vErrMsg[ecINVALID_VAR_PTR]        = _T("Invalid pointer to variable.");
@@ -88,20 +86,9 @@ namespace mu
     m_vErrMsg[ecDOMAIN_ERROR]           = _T("Domain error");
     m_vErrMsg[ecNAME_CONFLICT]          = _T("Name conflict");
     m_vErrMsg[ecOPT_PRI]                = _T("Invalid value for operator priority (must be greater or equal to zero).");
-    m_vErrMsg[ecBUILTIN_OVERLOAD]       = _T("user defined binary operator \"$TOK$\" conflicts with a built in operator.");
-    m_vErrMsg[ecUNEXPECTED_STR]         = _T("Unexpected string token found at position $POS$.");
-    m_vErrMsg[ecUNTERMINATED_STRING]    = _T("Unterminated string starting at position $POS$.");
-    m_vErrMsg[ecSTRING_EXPECTED]        = _T("String function called with a non string type of argument.");
-    m_vErrMsg[ecVAL_EXPECTED]           = _T("String value used where a numerical argument is expected.");
-    m_vErrMsg[ecOPRT_TYPE_CONFLICT]     = _T("No suitable overload for operator \"$TOK$\" at position $POS$.");
-    m_vErrMsg[ecSTR_RESULT]             = _T("Function result is a string.");
     m_vErrMsg[ecGENERIC]                = _T("Parser error.");
     m_vErrMsg[ecLOCALE]                 = _T("Decimal separator is identic to function argument separator.");
-    m_vErrMsg[ecUNEXPECTED_CONDITIONAL] = _T("The \"$TOK$\" operator must be preceeded by a closing bracket.");
-    m_vErrMsg[ecMISSING_ELSE_CLAUSE]    = _T("If-then-else operator is missing an else clause");
-    m_vErrMsg[ecMISPLACED_COLON]        = _T("Misplaced colon at position $POS$");
-    m_vErrMsg[ecUNREASONABLE_NUMBER_OF_COMPUTATIONS] = _T("Number of computations to small for bulk mode. (Vectorisation overhead too costly)");
-    
+
     #if defined(_DEBUG)
       for (int i=0; i<ecCOUNT; ++i)
         if (!m_vErrMsg[i].length())
@@ -118,7 +105,7 @@ namespace mu
   /** \brief Default constructor. */
   ParserError::ParserError()
     :m_strMsg()
-    ,m_strFormula()
+    ,m_sExpr()
     ,m_strTok()
     ,m_iPos(-1)
     ,m_iErrc(ecUNDEFINED)
@@ -133,7 +120,7 @@ namespace mu
   */
   ParserError::ParserError(EErrorCodes a_iErrc) 
     :m_strMsg()
-    ,m_strFormula()
+    ,m_sExpr()
     ,m_strTok()
     ,m_iPos(-1)
     ,m_iErrc(a_iErrc)
@@ -167,7 +154,7 @@ namespace mu
                             const string_type &sExpr,
                             int iPos )
     :m_strMsg()
-    ,m_strFormula(sExpr)
+    ,m_sExpr(sExpr)
     ,m_strTok(sTok)
     ,m_iPos(iPos)
     ,m_iErrc(iErrc)
@@ -188,7 +175,7 @@ namespace mu
   */
   ParserError::ParserError(EErrorCodes iErrc, int iPos, const string_type &sTok) 
     :m_strMsg()
-    ,m_strFormula()
+    ,m_sExpr()
     ,m_strTok(sTok)
     ,m_iPos(iPos)
     ,m_iErrc(iErrc)
@@ -209,7 +196,7 @@ namespace mu
   */
   ParserError::ParserError(const char_type *szMsg, int iPos, const string_type &sTok) 
     :m_strMsg(szMsg)
-    ,m_strFormula()
+    ,m_sExpr()
     ,m_strTok(sTok)
     ,m_iPos(iPos)
     ,m_iErrc(ecGENERIC)
@@ -225,7 +212,7 @@ namespace mu
   /** \brief Copy constructor. */
   ParserError::ParserError(const ParserError &a_Obj)
     :m_strMsg(a_Obj.m_strMsg)
-    ,m_strFormula(a_Obj.m_strFormula)
+    ,m_sExpr(a_Obj.m_sExpr)
     ,m_strTok(a_Obj.m_strTok)
     ,m_iPos(a_Obj.m_iPos)
     ,m_iErrc(a_Obj.m_iErrc)
@@ -241,7 +228,7 @@ namespace mu
       return *this;
 
     m_strMsg = a_Obj.m_strMsg;
-    m_strFormula = a_Obj.m_strFormula;
+    m_sExpr = a_Obj.m_sExpr;
     m_strTok = a_Obj.m_strTok;
     m_iPos = a_Obj.m_iPos;
     m_iErrc = a_Obj.m_iErrc;
@@ -284,7 +271,7 @@ namespace mu
   void ParserError::Reset()
   {
     m_strMsg = _T("");
-    m_strFormula = _T("");
+    m_sExpr = _T("");
     m_strTok = _T("");
     m_iPos = -1;
     m_iErrc = ecUNDEFINED;
@@ -294,14 +281,14 @@ namespace mu
   /** \brief Set the expression related to this error. */
   void ParserError::SetFormula(const string_type &a_strFormula)
   {
-    m_strFormula = a_strFormula;
+    m_sExpr = a_strFormula;
   }
 
   //------------------------------------------------------------------------------
   /** \brief gets the expression related tp this error.*/
   const string_type& ParserError::GetExpr() const 
   {
-    return m_strFormula;
+    return m_sExpr;
   }
 
   //------------------------------------------------------------------------------

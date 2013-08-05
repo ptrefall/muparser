@@ -367,9 +367,7 @@
     <ClCompile Include="..\..\src\muParserBase.cpp" />
     <ClCompile Include="..\..\src\muParserBytecode.cpp" />
     <ClCompile Include="..\..\src\muParserCallback.cpp" />
-    <ClCompile Include="..\..\src\muParserDLL.cpp" />
     <ClCompile Include="..\..\src\muParserError.cpp" />
-    <ClCompile Include="..\..\src\muParserInt.cpp" />
     <ClCompile Include="..\..\src\muParserTest.cpp" />
     <ClCompile Include="..\..\src\muParserTokenReader.cpp" />
   </ItemGroup>
@@ -379,10 +377,7 @@
     <ClInclude Include="..\..\include\muParserBytecode.h" />
     <ClInclude Include="..\..\include\muParserCallback.h" />
     <ClInclude Include="..\..\include\muParserDef.h" />
-    <ClInclude Include="..\..\include\muParserDLL.h" />
     <ClInclude Include="..\..\include\muParserError.h" />
-    <ClInclude Include="..\..\include\muParserFixes.h" />
-    <ClInclude Include="..\..\include\muParserInt.h" />
     <ClInclude Include="..\..\include\muParserStack.h" />
     <ClInclude Include="..\..\include\muParserTest.h" />
     <ClInclude Include="..\..\include\muParserToken.h" />

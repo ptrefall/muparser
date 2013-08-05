@@ -63,11 +63,8 @@ namespace mu
   private:
 
       ECmdCode  m_iCode;  ///< Type of the token; The token type is a constant of type #ECmdCode.
-      ETypeCode m_iType;
       void  *m_pTok;      ///< Stores Token pointer; not applicable for all tokens
-      int  m_iIdx;        ///< An otional index to an external buffer storing the token data
       TString m_strTok;   ///< Token string
-      TString m_strVal;   ///< Value for string variables
       value_type m_fVal;  ///< the value 
       std::auto_ptr<ParserCallback> m_pCallback;
 
@@ -82,9 +79,7 @@ namespace mu
       */
       ParserToken()
         :m_iCode(cmUNKNOWN)
-        ,m_iType(tpVOID)
         ,m_pTok(0)
-        ,m_iIdx(-1)
         ,m_strTok()
         ,m_pCallback()
       {}
@@ -125,9 +120,6 @@ namespace mu
         m_iCode = a_Tok.m_iCode;
         m_pTok = a_Tok.m_pTok;
         m_strTok = a_Tok.m_strTok;
-        m_iIdx = a_Tok.m_iIdx;
-        m_strVal = a_Tok.m_strVal;
-        m_iType = a_Tok.m_iType;
         m_fVal = a_Tok.m_fVal;
         // create new callback object if a_Tok has one 
         m_pCallback.reset(a_Tok.m_pCallback.get() ? a_Tok.m_pCallback->Clone() : 0);
@@ -152,10 +144,8 @@ namespace mu
         assert(a_iType!=cmFUNC);
 
         m_iCode = a_iType;
-        m_iType = tpVOID;
         m_pTok = 0;
         m_strTok = a_strTok;
-        m_iIdx = -1;
 
         return *this;
       }
@@ -167,12 +157,9 @@ namespace mu
         assert(a_pCallback.GetAddr());
 
         m_iCode = a_pCallback.GetCode();
-        m_iType = tpVOID;
         m_strTok = a_sTok;
         m_pCallback.reset(new ParserCallback(a_pCallback));
-
         m_pTok = 0;
-        m_iIdx = -1;
         
         return *this;
       }
@@ -186,14 +173,10 @@ namespace mu
       ParserToken& SetVal(TBase a_fVal, const TString &a_strTok=TString())
       {
         m_iCode = cmVAL;
-        m_iType = tpDBL;
         m_fVal = a_fVal;
         m_strTok = a_strTok;
-        m_iIdx = -1;
-        
         m_pTok = 0;
         m_pCallback.reset(0);
-
         return *this;
       }
 
@@ -206,61 +189,10 @@ namespace mu
       ParserToken& SetVar(TBase *a_pVar, const TString &a_strTok)
       {
         m_iCode = cmVAR;
-        m_iType = tpDBL;
         m_strTok = a_strTok;
-        m_iIdx = -1;
         m_pTok = (void*)a_pVar;
         m_pCallback.reset(0);
         return *this;
-      }
-
-      //------------------------------------------------------------------------------
-      /** \brief Make this token a variable token. 
-      
-          Member variables not necessary for variable tokens will be invalidated.
-          \throw nothrow
-      */
-      ParserToken& SetString(const TString &a_strTok, std::size_t a_iSize)
-      {
-        m_iCode = cmSTRING;
-        m_iType = tpSTR;
-        m_strTok = a_strTok;
-        m_iIdx = static_cast<int>(a_iSize);
-
-        m_pTok = 0;
-        m_pCallback.reset(0);
-        return *this;
-      }
-
-      //------------------------------------------------------------------------------
-      /** \brief Set an index associated with the token related data. 
-      
-          In cmSTRFUNC - This is the index to a string table in the main parser.
-          \param a_iIdx The index the string function result will take in the bytecode parser.
-          \throw exception_type if #a_iIdx<0 or #m_iType!=cmSTRING
-      */
-      void SetIdx(int a_iIdx)
-      {
-        if (m_iCode!=cmSTRING || a_iIdx<0)
-	        throw ParserError(ecINTERNAL_ERROR);
-        
-        m_iIdx = a_iIdx;
-      }
-
-      //------------------------------------------------------------------------------
-      /** \brief Return Index associated with the token related data. 
-      
-          In cmSTRFUNC - This is the index to a string table in the main parser.
-
-          \throw exception_type if #m_iIdx<0 or #m_iType!=cmSTRING
-          \return The index the result will take in the Bytecode calculatin array (#m_iIdx).
-      */
-      int GetIdx() const
-      {
-        if (m_iIdx<0 || m_iCode!=cmSTRING )
-          throw ParserError(ecINTERNAL_ERROR);
-
-        return m_iIdx;
       }
 
       //------------------------------------------------------------------------------
@@ -282,25 +214,12 @@ namespace mu
       }
 
       //------------------------------------------------------------------------------
-      ETypeCode GetType() const
-      {
-        if (m_pCallback.get())
-        {
-          return m_pCallback->GetType();
-        }
-        else
-        {
-          return m_iType;
-        }
-      }
-      
-      //------------------------------------------------------------------------------
       int GetPri() const
       {
         if ( !m_pCallback.get())
 	        throw ParserError(ecINTERNAL_ERROR);
             
-        if ( m_pCallback->GetCode()!=cmOPRT_BIN && m_pCallback->GetCode()!=cmOPRT_INFIX)
+        if (m_pCallback->GetCode()!=cmOPRT_INFIX)
 	        throw ParserError(ecINTERNAL_ERROR);
 
         return m_pCallback->GetPri();
@@ -309,7 +228,7 @@ namespace mu
       //------------------------------------------------------------------------------
       EOprtAssociativity GetAssociativity() const
       {
-        if (m_pCallback.get()==NULL || m_pCallback->GetCode()!=cmOPRT_BIN)
+        if (m_pCallback.get()==nullptr)
 	        throw ParserError(ecINTERNAL_ERROR);
 
         return m_pCallback->GetAssociativity();
@@ -323,8 +242,6 @@ namespace mu
           \throw exception_type if token type is non of:
                  <ul>
                    <li>cmFUNC</li>
-                   <li>cmSTRFUNC</li>
-                   <li>cmPOSTOP</li>
                    <li>cmINFIXOP</li>
                    <li>cmOPRT_BIN</li>
                  </ul>
@@ -347,7 +264,7 @@ namespace mu
         {
           case cmVAL:  return m_fVal;
           case cmVAR:  return *((TBase*)m_pTok);
-          default:     throw ParserError(ecVAL_EXPECTED);
+          default:     throw ParserError(ecINTERNAL_ERROR);
         }
       }
 
@@ -365,7 +282,7 @@ namespace mu
         return (TBase*)m_pTok;
       }
 
-      //------------------------------------------------------------------------------
+      //-------------------------------------------------------------------------------------------
       /** \brief Return the number of function arguments. 
 
         Valid only if m_iType==CmdFUNC.
@@ -380,11 +297,8 @@ namespace mu
         return m_pCallback->GetArgc();
       }
 
-      //------------------------------------------------------------------------------
+      //-------------------------------------------------------------------------------------------
       /** \brief Return the token identifier. 
-          
-          If #m_iType is cmSTRING the token identifier is the value of the string argument
-          for a string function.
           \return #m_strTok
           \throw nothrow
           \sa m_strTok

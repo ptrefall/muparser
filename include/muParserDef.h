@@ -30,19 +30,14 @@
 #include <sstream>
 #include <map>
 
-#include "muParserFixes.h"
-
 /** \file
     \brief This file contains standard definitions used by the parser.
 */
 
-#define MUP_VERSION _T("2.2.4")
-#define MUP_VERSION_DATE _T("20130723; SF")
+#define MUP_VERSION _T("0.0.0")
+#define MUP_VERSION_DATE _T("20130402; SF")
 
 #define MUP_CHARS _T("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-/** \brief If this macro is defined mathematical exceptions (div by zero) will be thrown as exceptions. */
-//#define MUP_MATH_EXCEPTIONS
 
 /** \brief Define the base datatype for values.
 
@@ -74,14 +69,6 @@
 #endif
 
 #if defined(_DEBUG)
-  /** \brief Debug macro to force an abortion of the programm with a certain message.
-  */
-  #define MUP_FAIL(MSG)     \
-          {                 \
-            bool MSG=false; \
-            assert(MSG);    \
-          }
-
     /** \brief An assertion that does not kill the program.
 
         This macro is neutralised in UNICODE builds. It's
@@ -97,7 +84,6 @@
               throw ParserError( ss.str() );         \
             }
 #else
-  #define MUP_FAIL(MSG)
   #define MUP_ASSERT(COND)
 #endif
 
@@ -164,43 +150,18 @@ namespace mu
     cmPOW           = 10,  ///< Operator item:  y to the power of ...
     cmLAND          = 11,
     cmLOR           = 12,
-    cmASSIGN        = 13,  ///< Operator item:  Assignment operator
-    cmBO            = 14,  ///< Operator item:  opening bracket
-    cmBC            = 15,  ///< Operator item:  closing bracket
-    cmIF            = 16,  ///< For use in the ternary if-then-else operator
-    cmELSE          = 17,  ///< For use in the ternary if-then-else operator
-    cmENDIF         = 18,  ///< For use in the ternary if-then-else operator
-    cmARG_SEP       = 19,  ///< function argument separator
-    cmVAR           = 20,  ///< variable item
-    cmVAL           = 21,  ///< value item
-
-    // For optimization purposes
-    cmVARPOW2,
-    cmVARPOW3,
-    cmVARPOW4,
-    cmVARMUL,
-    cmPOW2,
+    cmBO            = 13,  ///< Operator item:  opening bracket
+    cmBC            = 14,  ///< Operator item:  closing bracket
+    cmARG_SEP       = 15,  ///< function argument separator
+    cmVAR           = 16,  ///< variable item
+    cmVAL           = 17,  ///< value item
 
     // operators and functions
     cmFUNC,                ///< Code for a generic function item
-    cmFUNC_STR,            ///< Code for a function with a string parameter
     cmFUNC_BULK,           ///< Special callbacks for Bulk mode with an additional parameter for the bulk index 
-    cmSTRING,              ///< Code for a string token
-    cmOPRT_BIN,            ///< user defined binary operator
-    cmOPRT_POSTFIX,        ///< code for postfix operators
     cmOPRT_INFIX,          ///< code for infix operators
     cmEND,                 ///< end of formula
     cmUNKNOWN              ///< uninitialized item
-  };
-
-  //------------------------------------------------------------------------------
-  /** \brief Types internally used by the parser.
-  */
-  enum ETypeCode
-  {
-    tpSTR  = 0,     ///< String type (Function arguments and constants only, no string variables)
-    tpDBL  = 1,     ///< Floating point variables
-    tpVOID = 2      ///< Undefined type.
   };
 
   //------------------------------------------------------------------------------
@@ -271,9 +232,6 @@ namespace mu
   /** \brief Type used for storing constants. */
   typedef std::map<string_type, value_type> valmap_type;
   
-  /** \brief Type for assigning a string name to an index in the internal string table. */
-  typedef std::map<string_type, std::size_t> strmap_type;
-
   // Parser callbacks
   
   /** \brief Callback type used for functions without arguments. */
@@ -291,27 +249,6 @@ namespace mu
   /** \brief Callback type used for functions with three arguments. */
   typedef value_type (*fun_type3)(value_type, value_type, value_type);
 
-  /** \brief Callback type used for functions with four arguments. */
-  typedef value_type (*fun_type4)(value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*fun_type5)(value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*fun_type6)(value_type, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*fun_type7)(value_type, value_type, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*fun_type8)(value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*fun_type9)(value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*fun_type10)(value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type);
-
   /** \brief Callback type used for functions without arguments. */
   typedef value_type (*bulkfun_type0)(int, int);
 
@@ -324,44 +261,8 @@ namespace mu
   /** \brief Callback type used for functions with three arguments. */
   typedef value_type (*bulkfun_type3)(int, int, value_type, value_type, value_type);
 
-  /** \brief Callback type used for functions with four arguments. */
-  typedef value_type (*bulkfun_type4)(int, int, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*bulkfun_type5)(int, int, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*bulkfun_type6)(int, int, value_type, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*bulkfun_type7)(int, int, value_type, value_type, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*bulkfun_type8)(int, int, value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*bulkfun_type9)(int, int, value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with five arguments. */
-  typedef value_type (*bulkfun_type10)(int, int, value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type, value_type);
-
-  /** \brief Callback type used for functions with a variable argument list. */
-  typedef value_type (*multfun_type)(const value_type*, int);
-
-  /** \brief Callback type used for functions taking a string as an argument. */
-  typedef value_type (*strfun_type1)(const char_type*);
-
-  /** \brief Callback type used for functions taking a string and a value as arguments. */
-  typedef value_type (*strfun_type2)(const char_type*, value_type);
-
-  /** \brief Callback type used for functions taking a string and two values as arguments. */
-  typedef value_type (*strfun_type3)(const char_type*, value_type, value_type);
-
   /** \brief Callback used for functions that identify values in a string. */
   typedef int (*identfun_type)(const char_type *sExpr, int *nPos, value_type *fVal);
-
-  /** \brief Callback used for variable creation factory functions. */
-  typedef value_type* (*facfun_type)(const char_type*, void*);
 } // end of namespace
 
 #endif

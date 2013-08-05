@@ -70,51 +70,15 @@ namespace mu
   // Logarithm functions
 
   // Logarithm base 2
-  value_type Parser::Log2(value_type v)  
-  { 
-    #ifdef MUP_MATH_EXCEPTIONS
-        if (v<=0)
-          throw ParserError(ecDOMAIN_ERROR, _T("Log2"));
-    #endif
-
-    return MathImpl<value_type>::Log2(v);  
-  }  
-
-  // Logarithm base 10
-  value_type Parser::Log10(value_type v) 
-  { 
-    #ifdef MUP_MATH_EXCEPTIONS
-        if (v<=0)
-          throw ParserError(ecDOMAIN_ERROR, _T("Log10"));
-    #endif
-
-    return MathImpl<value_type>::Log10(v); 
-  } 
-
-// Logarithm base e (natural logarithm)
-  value_type Parser::Ln(value_type v)    
-  { 
-    #ifdef MUP_MATH_EXCEPTIONS
-        if (v<=0)
-          throw ParserError(ecDOMAIN_ERROR, _T("Ln"));
-    #endif
-
-    return MathImpl<value_type>::Log(v);   
-  } 
+  value_type Parser::Log2(value_type v)  { return MathImpl<value_type>::Log2(v);  }  
+  value_type Parser::Log10(value_type v) { return MathImpl<value_type>::Log10(v); } 
+  value_type Parser::Ln(value_type v)    { return MathImpl<value_type>::Log(v);   } 
 
   //---------------------------------------------------------------------------
   //  misc
   value_type Parser::Exp(value_type v)  { return MathImpl<value_type>::Exp(v);  }
   value_type Parser::Abs(value_type v)  { return MathImpl<value_type>::Abs(v);  }
-  value_type Parser::Sqrt(value_type v) 
-  { 
-    #ifdef MUP_MATH_EXCEPTIONS
-        if (v<0)
-          throw ParserError(ecDOMAIN_ERROR, _T("sqrt"));
-    #endif
-
-    return MathImpl<value_type>::Sqrt(v); 
-  }
+  value_type Parser::Sqrt(value_type v) { return MathImpl<value_type>::Sqrt(v); }
   value_type Parser::Rint(value_type v) { return MathImpl<value_type>::Rint(v); }
   value_type Parser::Sign(value_type v) { return MathImpl<value_type>::Sign(v); }
 
@@ -126,16 +90,6 @@ namespace mu
   value_type Parser::UnaryMinus(value_type v) 
   { 
     return -v; 
-  }
-
-  //---------------------------------------------------------------------------
-  /** \brief Callback for the unary minus operator.
-      \param v The value to negate
-      \return -v
-  */
-  value_type Parser::UnaryPlus(value_type v) 
-  { 
-    return v; 
   }
 
   //---------------------------------------------------------------------------
@@ -217,7 +171,6 @@ namespace mu
 
     stringstream_type stream(a_szExpr);
     stream.seekg(0);        // todo:  check if this really is necessary
-    stream.imbue(Parser::s_locale);
     stream >> fVal;
     stringstream_type::pos_type iEnd = stream.tellg(); // Position after reading
 
@@ -256,7 +209,6 @@ namespace mu
   void Parser::InitCharSets()
   {
     DefineNameChars( _T("0123456789_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") );
-    DefineOprtChars( _T("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*^/?<>=#!$%&|~'_{}") );
     DefineInfixOprtChars( _T("/+-*^?<>=#!$%&|~'_") );
   }
 
@@ -294,7 +246,7 @@ namespace mu
       // Logarithm functions
       DefineFun(_T("log2"), Log2);
       DefineFun(_T("log10"), Log10);
-      DefineFun(_T("log"), Ln);
+      DefineFun(_T("log"), Log10);
       DefineFun(_T("ln"), Ln);
       // misc
       DefineFun(_T("exp"), Exp);
@@ -302,11 +254,6 @@ namespace mu
       DefineFun(_T("sign"), Sign);
       DefineFun(_T("rint"), Rint);
       DefineFun(_T("abs"), Abs);
-      // Functions with variable number of arguments
-      DefineFun(_T("sum"), Sum);
-      DefineFun(_T("avg"), Avg);
-      DefineFun(_T("min"), Min);
-      DefineFun(_T("max"), Max);
     }
   }
 
@@ -330,68 +277,5 @@ namespace mu
   void Parser::InitOprt()
   {
     DefineInfixOprt(_T("-"), UnaryMinus);
-    DefineInfixOprt(_T("+"), UnaryPlus);
-  }
-
-  //---------------------------------------------------------------------------
-  void Parser::OnDetectVar(string_type * /*pExpr*/, int & /*nStart*/, int & /*nEnd*/)
-  {
-    // this is just sample code to illustrate modifying variable names on the fly.
-    // I'm not sure anyone really needs such a feature...
-    /*
-
-
-    string sVar(pExpr->begin()+nStart, pExpr->begin()+nEnd);
-    string sRepl = std::string("_") + sVar + "_";
-  
-    int nOrigVarEnd = nEnd;
-    cout << "variable detected!\n";
-    cout << "  Expr: " << *pExpr << "\n";
-    cout << "  Start: " << nStart << "\n";
-    cout << "  End: " << nEnd << "\n";
-    cout << "  Var: \"" << sVar << "\"\n";
-    cout << "  Repl: \"" << sRepl << "\"\n";
-    nEnd = nStart + sRepl.length();
-    cout << "  End: " << nEnd << "\n";
-    pExpr->replace(pExpr->begin()+nStart, pExpr->begin()+nOrigVarEnd, sRepl);
-    cout << "  New expr: " << *pExpr << "\n";
-    */
-  }
-
-  //---------------------------------------------------------------------------
-  /** \brief Numerically differentiate with regard to a variable. 
-      \param [in] a_Var Pointer to the differentiation variable.
-      \param [in] a_fPos Position at which the differentiation should take place.
-      \param [in] a_fEpsilon Epsilon used for the numerical differentiation.
-
-    Numerical differentiation uses a 5 point operator yielding a 4th order 
-    formula. The default value for epsilon is 0.00074 which is
-    numeric_limits<double>::epsilon() ^ (1/5) as suggested in the muparser
-    forum:
-
-    http://sourceforge.net/forum/forum.php?thread_id=1994611&forum_id=462843
-  */
-  value_type Parser::Diff(value_type *a_Var, 
-                          value_type  a_fPos, 
-                          value_type  a_fEpsilon) const
-  {
-    value_type fRes(0), 
-               fBuf(*a_Var),
-               f[4] = {0,0,0,0},
-               fEpsilon(a_fEpsilon);
-
-    // Backwards compatible calculation of epsilon inc case the user doesnt provide
-    // his own epsilon
-    if (fEpsilon==0)
-      fEpsilon = (a_fPos==0) ? (value_type)1e-10 : (value_type)1e-7 * a_fPos;
-
-    *a_Var = a_fPos+2 * fEpsilon;  f[0] = Eval();
-    *a_Var = a_fPos+1 * fEpsilon;  f[1] = Eval();
-    *a_Var = a_fPos-1 * fEpsilon;  f[2] = Eval();
-    *a_Var = a_fPos-2 * fEpsilon;  f[3] = Eval();
-    *a_Var = fBuf; // restore variable
-
-    fRes = (-f[0] + 8*f[1] - 8*f[2] + f[3]) / (12*fEpsilon);
-    return fRes;
   }
 } // namespace mu

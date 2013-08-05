@@ -64,6 +64,80 @@ friend class ParserTokenReader;
 
 private:
 
+    enum EInfixOp
+    {
+      NEG = 0,
+      POS = 1
+    };
+
+    enum EBinOp
+    {
+      LE = 0, ///< Operator item:  less or equal
+      GE,     ///< Operator item:  greater or equal
+      NEQ,    ///< Operator item:  not equal
+      EQ,     ///< Operator item:  equals
+      LT,     ///< Operator item:  less than
+      GT,     ///< Operator item:  greater than
+      ADD,    ///< Operator item:  add
+      SUB,    ///< Operator item:  subtract
+      MUL,    ///< Operator item:  multiply
+      DIV,    ///< Operator item:  division
+      POW,    ///< Operator item:  y to the power of ...
+      LAND,
+      LOR
+    };
+
+    enum EFunction
+    {
+      SIN = 0,
+      COS, 
+      TAN,
+      ASIN,
+      ACOS,
+      ATAN,
+      ATAN2,
+      SINH,
+      COSH,
+      TANH,
+      ASINH,
+      ACOSH,
+      ATANH,
+      LOG2,
+      LOG10,
+      LOG,
+      LN,
+      EXP,
+      SQRT,
+      SIGN,
+      RINT,
+      ABS
+    };
+
+    struct SBinOp
+    {
+      const char_type *ID;
+      EBinOp Code;
+      EOprtAssociativity Asoc;
+      int Prec;
+    };
+    
+    struct SInfixOp
+    {
+      const char_type *ID;
+      EInfixOp Code;
+    };
+
+    struct SFunction
+    {
+      const char_type *ID;
+      EFunction Code;
+      int Argc;
+    };
+
+    static SBinOp    s_defBinOp[]; 
+    static SInfixOp  s_defInfixOp[]; 
+    static SFunction s_defFun[];
+
     /** \brief Typedef for the parse functions. 
     
       The parse function do the actual work. The parser exchanges
@@ -75,9 +149,6 @@ private:
     /** \brief Type used for storing an array of values. */
     typedef std::vector<value_type> valbuf_type;
 
-    /** \brief Type for a vector of strings. */
-    typedef std::vector<string_type> stringbuf_type;
-
     /** \brief Typedef for the token reader. */
     typedef ParserTokenReader token_reader_type;
     
@@ -85,7 +156,7 @@ private:
     typedef ParserToken<value_type, string_type> token_type;
 
     /** \brief Maximum number of threads spawned by OpenMP when using the bulk mode. */
-    static const int s_MaxNumOpenMPThreads = 16;
+    static const int s_MaxNumOpenMPThreads = 4;
 
  public:
 
@@ -103,23 +174,12 @@ private:
 
     virtual ~ParserBase();
     
-	  value_type  Eval() const;
+    value_type  Eval() const;
     value_type* Eval(int &nStackSize) const;
     void Eval(value_type *results, int nBulkSize);
-
     int GetNumResults() const;
 
     void SetExpr(const string_type &a_sExpr);
-    void SetVarFactory(facfun_type a_pFactory, void *pUserData = NULL);
-
-    void SetDecSep(char_type cDecSep);
-    void SetThousandsSep(char_type cThousandsSep = 0);
-    void ResetLocale();
-
-    void EnableOptimizer(bool a_bIsOn=true);
-    void EnableBuiltInOprt(bool a_bIsOn=true);
-
-    bool HasBuiltInOprt() const;
     void AddValIdent(identfun_type a_pCallback);
 
     /** \fn void mu::ParserBase::DefineFun(const string_type &a_strName, fun_type0 a_pFun, bool a_bAllowOpt = true) 
@@ -134,15 +194,8 @@ private:
       AddCallback( a_strName, ParserCallback(a_pFun, a_bAllowOpt), m_FunDef, ValidNameChars() );
     }
 
-    void DefineOprt(const string_type &a_strName, 
-                    fun_type2 a_pFun, 
-                    unsigned a_iPri=0, 
-                    EOprtAssociativity a_eAssociativity = oaLEFT,
-                    bool a_bAllowOpt = false);
     void DefineConst(const string_type &a_sName, value_type a_fVal);
-    void DefineStrConst(const string_type &a_sName, const string_type &a_strVal);
     void DefineVar(const string_type &a_sName, value_type *a_fVar);
-    void DefinePostfixOprt(const string_type &a_strFun, fun_type1 a_pOprt, bool a_bAllowOpt=true);
     void DefineInfixOprt(const string_type &a_strName, fun_type1 a_pOprt, int a_iPrec=prINFIX, bool a_bAllowOpt=true);
 
     // Clear user defined variables, constants or functions
@@ -150,29 +203,20 @@ private:
     void ClearFun();
     void ClearConst();
     void ClearInfixOprt();
-    void ClearPostfixOprt();
-    void ClearOprt();
     
     void RemoveVar(const string_type &a_strVarName);
-    const varmap_type& GetUsedVar() const;
     const varmap_type& GetVar() const;
     const valmap_type& GetConst() const;
     const string_type& GetExpr() const;
-    const funmap_type& GetFunDef() const;
     string_type GetVersion(EParserVersionInfo eInfo = pviFULL) const;
 
-    const char_type ** GetOprtDef() const;
+    const char_type **GetOprtDef() const;
     void DefineNameChars(const char_type *a_szCharset);
-    void DefineOprtChars(const char_type *a_szCharset);
     void DefineInfixOprtChars(const char_type *a_szCharset);
 
     const char_type* ValidNameChars() const;
-    const char_type* ValidOprtChars() const;
     const char_type* ValidInfixOprtChars() const;
 
-    void SetArgSep(char_type cArgSep);
-    char_type GetArgSep() const;
-    
     void  Error(EErrorCodes a_iErrc, 
                 int a_iPos = (int)mu::string_type::npos, 
                 const string_type &a_strTok = string_type() ) const;
@@ -184,12 +228,8 @@ private:
     virtual void InitCharSets() = 0;
     virtual void InitFun() = 0;
     virtual void InitConst() = 0;
-    virtual void InitOprt() = 0; 
-
-    virtual void OnDetectVar(string_type *pExpr, int &nStart, int &nEnd);
 
     static const char_type *c_DefaultOprt[]; 
-    static std::locale s_locale;  ///< The locale used by the parser
     static bool g_DbgDumpCmdCode;
     static bool g_DbgDumpStack;
 
@@ -246,15 +286,9 @@ private:
     void ApplyBinOprt(ParserStack<token_type> &a_stOpt,
                       ParserStack<token_type> &a_stVal) const;
 
-    void ApplyIfElse(ParserStack<token_type> &a_stOpt,
-                     ParserStack<token_type> &a_stVal) const;
-
     void ApplyFunc(ParserStack<token_type> &a_stOpt,
                    ParserStack<token_type> &a_stVal, 
                    int iArgCount) const; 
-
-    token_type ApplyStrFunc(const token_type &a_FunTok,
-                            const std::vector<token_type> &a_vArg) const;
 
     int GetOprtPrecedence(const token_type &a_Tok) const;
     EOprtAssociativity GetOprtAssociativity(const token_type &a_Tok) const;
@@ -279,27 +313,17 @@ private:
     */
     mutable ParseFunction  m_pParseFormula;
     mutable ParserByteCode m_vRPN;        ///< The Bytecode class.
-    mutable stringbuf_type  m_vStringBuf; ///< String buffer, used for storing string function arguments
-    stringbuf_type  m_vStringVarBuf;
 
     std::auto_ptr<token_reader_type> m_pTokenReader; ///< Managed pointer to the token reader object.
 
     funmap_type  m_FunDef;         ///< Map of function names and pointers.
-    funmap_type  m_PostOprtDef;    ///< Postfix operator callbacks
     funmap_type  m_InfixOprtDef;   ///< unary infix operator.
-    funmap_type  m_OprtDef;        ///< Binary operator callbacks
     valmap_type  m_ConstDef;       ///< user constants.
-    strmap_type  m_StrVarDef;      ///< user defined string constants
     varmap_type  m_VarDef;         ///< user defind variables.
 
-    bool m_bBuiltInOp;             ///< Flag that can be used for switching built in operators on and off
-
     string_type m_sNameChars;      ///< Charset for names
-    string_type m_sOprtChars;      ///< Charset for postfix/ binary operator tokens
     string_type m_sInfixOprtChars; ///< Charset for infix operator tokens
     
-    mutable int m_nIfElseCounter;  ///< Internal counter for keeping track of nested if-then-else clauses
-
     // items merely used for caching state information
     mutable valbuf_type m_vStackBuffer; ///< This is merely a buffer used for the stack in the cmd parsing routine
     mutable int m_nFinalResultIdx;

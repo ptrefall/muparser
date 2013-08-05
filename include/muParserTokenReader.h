@@ -63,16 +63,11 @@ namespace mu
       ParserTokenReader* Clone(ParserBase *a_pParent) const;
 
       void AddValIdent(identfun_type a_pCallback);
-      void SetVarCreator(facfun_type a_pFactory, void *pUserData);
       void SetFormula(const string_type &a_strFormula);
-      void SetArgSep(char_type cArgSep);
 
       int GetPos() const;
       const string_type& GetExpr() const;
-      varmap_type& GetUsedVar();
-      char_type GetArgSep() const;
 
-      void IgnoreUndefVar(bool bIgnore);
       void ReInit();
       token_type ReadNextToken();
 
@@ -93,14 +88,9 @@ namespace mu
         noARG_SEP = 1 << 4,  ///< to avoid i.e. ",," or "+," ...
         noFUN     = 1 << 5,  ///< to avoid i.e. "sqrt cos" or "(1)sin"	
         noOPT     = 1 << 6,  ///< to avoid i.e. "(+)"
-        noPOSTOP  = 1 << 7,  ///< to avoid i.e. "(5!!)" "sin!"
-	      noINFIXOP = 1 << 8,  ///< to avoid i.e. "++4" "!!4"
-        noEND     = 1 << 9,  ///< to avoid unexpected end of formula
-        noSTR     = 1 << 10, ///< to block numeric arguments on string functions
-        noASSIGN  = 1 << 11, ///< to block assignement to constant i.e. "4=7"
-        noIF      = 1 << 12,
-        noELSE    = 1 << 13,
-        sfSTART_OF_LINE = noOPT | noBC | noPOSTOP | noASSIGN | noIF | noELSE | noARG_SEP,
+	    noINFIXOP = 1 << 7,  ///< to avoid i.e. "++4" "!!4"
+        noEND     = 1 << 8,  ///< to avoid unexpected end of formula
+        sfSTART_OF_LINE = noOPT | noBC | noARG_SEP,
         noANY     = ~0       ///< All of he above flags set
       };	
 
@@ -119,13 +109,8 @@ namespace mu
       bool IsEOF(token_type &a_Tok);
       bool IsInfixOpTok(token_type &a_Tok);
       bool IsFunTok(token_type &a_Tok);
-      bool IsPostOpTok(token_type &a_Tok);
-      bool IsOprt(token_type &a_Tok);
       bool IsValTok(token_type &a_Tok);
       bool IsVarTok(token_type &a_Tok);
-      bool IsStrVarTok(token_type &a_Tok);
-      bool IsUndefVarTok(token_type &a_Tok);
-      bool IsString(token_type &a_Tok);
       void Error(EErrorCodes a_iErrc, 
                  int a_iPos = -1, 
                  const string_type &a_sTok = string_type() ) const;
@@ -133,26 +118,18 @@ namespace mu
       token_type& SaveBeforeReturn(const token_type &tok);
 
       ParserBase *m_pParser;
-      string_type m_strFormula;
+      string_type m_sExpr;
       int  m_iPos;
       int  m_iSynFlags;
-      bool m_bIgnoreUndefVar;
 
       const funmap_type *m_pFunDef;
-      const funmap_type *m_pPostOprtDef;
       const funmap_type *m_pInfixOprtDef;
-      const funmap_type *m_pOprtDef;
       const valmap_type *m_pConstDef;
-      const strmap_type *m_pStrVarDef;
       varmap_type *m_pVarDef;  ///< The only non const pointer to parser internals
-      facfun_type m_pFactory;
-      void *m_pFactoryData;
       std::list<identfun_type> m_vIdentFun; ///< Value token identification function
-      varmap_type m_UsedVar;
       value_type m_fZero;      ///< Dummy value of zero, referenced by undefined variables
       int m_iBrackets;
       token_type m_lastTok;
-      char_type m_cArgSep;     ///< The character used for separating function arguments
   };
 } // namespace mu
 
